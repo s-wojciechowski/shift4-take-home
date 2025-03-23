@@ -1,0 +1,40 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Sets up AWS Config rule that checks if EC2 serial console access is enabled"
+
+Parameters:
+  LambdaStackName:
+    Type: String
+    Description: "Name of the lambda stack that contains the Lambda roles"
+    Default: "DisableSerialConsole-lambda"
+  SSMStackName:
+    Type: String
+    Description: "Name of the SSM stack"
+    Default: "DisableSerialConsole-ssm"
+
+Resources:
+  SerialConsoleRule:
+    Type: AWS::Config::ConfigRule
+    Properties:
+      Source: 
+        Owner: CUSTOM_LAMBDA
+        SourceDetails:
+          - EventSource: aws.config
+            MessageType: ScheduledNotification
+        SourceIdentifier: !ImportValue 
+          Fn::Sub: "${LambdaStackName}-ConfigRuleLambdaArn"
+
+  # SerialConsoleRemediation:
+  #   Type: AWS::Config::RemediationConfiguration
+  #   Properties:
+  #     ConfigRuleName: !Ref SerialConsoleRule
+  #     Automatic: true
+  #     MaximumAutomaticAttempts: 1
+  #     RetryAttemptSeconds: 60
+  #     Parameters:
+  #       AutomationAssumeRole:
+  #           StaticValue:
+  #               Values: 
+  #               - automationAssumeRole
+  #     TargetType: SSM_DOCUMENT
+  #     TargetId: !ImportValue
+  #       Fn::Sub: "${SSMStackName}-SSMAutomationDocumentName"

@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Sets up a SNS topic for AWS Config rule non-compliance notifications"
+
+Parameters:
+  EmailAddress:
+    Type: String
+    Description: "Email address to receive non-compliance notifications"
+    AllowedPattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+    ConstraintDescription: "Must be a valid email address"
+    Default: "dev@wojciechowski.sh"
+
+Resources:
+  ConfigNonComplianceTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: "AWS Config Non-Compliance Notifications"
+      TopicName: "ConfigNonComplianceTopic"
+  
+  EmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref ConfigNonComplianceTopic
+      Protocol: "email"
+      Endpoint: !Ref EmailAddress
+
+Outputs:
+  ConfigNonComplianceTopicArn:
+    Description: "ARN of the SNS topic for Config non-compliance notifications"
+    Value: !Ref ConfigNonComplianceTopic
+    Export:
+      Name: !Sub "${AWS::StackName}-ConfigNonComplianceTopicArn"

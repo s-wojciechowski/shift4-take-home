@@ -1,0 +1,106 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Sets up Lambda functions for AWS Config rule and auto remediation"
+
+Parameters:
+  S3BucketName:
+    Type: String
+    Description: "Name of the S3 bucket containing Lambda function code"
+    Default: "wojciechowski.sh-lambda-registry"
+  # IAMStackName:
+  #   Type: String
+  #   Description: "Name of the IAM stack that contains the Lambda roles"
+  #   Default: "DisableSerialConsole-iam"
+
+Resources:
+  ConfigRuleRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSConfigRulesExecutionRole
+      Policies:
+        - PolicyName: ConfigRulePermissions
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:GetSerialConsoleAccessStatus
+                Resource: "*"
+
+  ConfigAutoRemediationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: RemediationPermissions
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:GetSerialConsoleAccessStatus
+                  - ec2:DisableSerialConsoleAccess
+                Resource: "*"
+
+  ConfigRuleLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Role: !GetAtt ConfigRuleRole.Arn
+      Runtime: python3.13
+      Handler: rule.lambda_handler
+      Code:
+        S3Bucket: !Ref S3BucketName
+        S3Key: rule.zip
+
+  ConfigAutoRemediationLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Role: !GetAtt ConfigAutoRemediationRole.Arn
+      Runtime: python3.13
+      Handler: auto_remediation.lambda_handler
+      Code:
+        S3Bucket: !Ref S3BucketName
+        S3Key: auto_remediation.zip
+
+  ConfigRulePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt ConfigRuleLambda.Arn
+      Action: lambda:InvokeFunction
+      Principal: config.amazonaws.com
+
+  ConfigAutoRemediationPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt ConfigAutoRemediationLambda.Arn
+      Action: lambda:InvokeFunction
+      Principal: config.amazonaws.com
+
+Outputs:
+  ConfigRuleLambdaArn:
+    Description: "ARN of the Config Rule Lambda function"
+    Value: !GetAtt ConfigRuleLambda.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-ConfigRuleLambdaArn"
+
+  ConfigAutoRemediationLambdaArn:
+    Description: "ARN of the Config Auto Remediation Lambda function"
+    Value: !GetAtt ConfigAutoRemediationLambda.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-ConfigAutoRemediationLambdaArn" 
