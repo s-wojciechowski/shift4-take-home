@@ -23,18 +23,10 @@ Resources:
         SourceIdentifier: !ImportValue 
           Fn::Sub: "${LambdaStackName}-ConfigRuleLambdaArn"
 
-  # SerialConsoleRemediation:
-  #   Type: AWS::Config::RemediationConfiguration
-  #   Properties:
-  #     ConfigRuleName: !Ref SerialConsoleRule
-  #     Automatic: true
-  #     MaximumAutomaticAttempts: 1
-  #     RetryAttemptSeconds: 60
-  #     Parameters:
-  #       AutomationAssumeRole:
-  #           StaticValue:
-  #               Values: 
-  #               - automationAssumeRole
-  #     TargetType: SSM_DOCUMENT
-  #     TargetId: !ImportValue
-  #       Fn::Sub: "${SSMStackName}-SSMAutomationDocumentName"
+  SerialConsoleRemediation:
+    Type: AWS::Config::RemediationConfiguration
+    Properties:
+      ConfigRuleName: !Ref SerialConsoleRule
+      TargetType: SSM_DOCUMENT
+      TargetId: !ImportValue
+        Fn::Sub: "${SSMStackName}-SSMAutomationDocumentName"

@@ -1,11 +1,11 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: "Sets up an SSM document for auto remediation"
 
-Parameters:
-  LambdaStackName:
-    Type: String
-    Description: "Name of the lambda stack that contains the Lambda roles"
-    Default: "DisableSerialConsole-lambda"
+# Parameters:
+#   LambdaStackName:
+#     Type: String
+#     Description: "Name of the lambda stack that contains the Lambda roles"
+#     Default: "DisableSerialConsole-lambda"
 
 Resources:
   SSMAutomationRole:
@@ -18,18 +18,17 @@ Resources:
             Principal:
               Service: ssm.amazonaws.com
             Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonSSMAutomationRole
+      # ManagedPolicyArns:
+      #   - arn:aws:iam::aws:policy/service-role/AmazonSSMAutomationRole
       Policies:
-        - PolicyName: LambdaInvokePolicy
+        - PolicyName: RemediationPermissions
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
-                  - lambda:InvokeFunction
-                Resource: !ImportValue 
-                  Fn::Sub: "${LambdaStackName}-ConfigAutoRemediationLambdaArn"
+                  - ec2:DisableSerialConsoleAccess
+                Resource: "*"
 
   SSMAutomationDocument:
     Type: AWS::SSM::Document
@@ -38,19 +37,15 @@ Resources:
       DocumentFormat: YAML
       Content:
         schemaVersion: '0.3'
-        description: "Invoke a Lambda function that disables the EC2 serial console"
+        description: "Disable EC2 serial console access"
         assumeRole: !GetAtt SSMAutomationRole.Arn
-        parameters:
-          LambdaFunctionArn:
-            type: String
-            description: ARN of the Lambda function to invoke
-            default: !ImportValue 
-              Fn::Sub: "${LambdaStackName}-ConfigAutoRemediationLambdaArn"
         mainSteps:
-          - name: InvokeLambdaFunction
-            action: aws:invokeLambdaFunction
+          - name: DisableSerialConsoleAccess
+            action: aws:executeAwsApi
+            isEnd: true
             inputs:
-              FunctionName: '{{ LambdaFunctionArn }}'
+              Service: ec2
+              Api: DisableSerialConsoleAccess
 
 Outputs:
   SSMAutomationDocumentName:
@@ -58,3 +53,9 @@ Outputs:
     Value: !Ref SSMAutomationDocument
     Export:
       Name: !Sub "${AWS::StackName}-SSMAutomationDocumentName"
+
+  SSMAutomationRoleArn:
+    Description: "ARN of the SSM Automation IAM Role"
+    Value: !GetAtt SSMAutomationRole.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-SSMAutomationRoleArn"

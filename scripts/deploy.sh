@@ -4,12 +4,6 @@ cd templates
 
 STACK_NAME="DisableSerialConsole"
 
-# aws cloudformation deploy \
-#     --template-file iam.yaml \
-#     --stack-name "$STACK_NAME-iam" \
-#     --capabilities CAPABILITY_IAM \
-#     --region eu-west-1
-
 aws cloudformation deploy \
     --template-file sns.yaml \
     --stack-name "$STACK_NAME-sns" \
