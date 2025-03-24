@@ -1,11 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Sets up an SSM document for auto remediation"
-
-# Parameters:
-#   LambdaStackName:
-#     Type: String
-#     Description: "Name of the lambda stack that contains the Lambda roles"
-#     Default: "DisableSerialConsole-lambda"
+Description: "Sets up an SSM document for Config remediation"
 
 Resources:
   SSMAutomationRole:
@@ -18,8 +12,6 @@ Resources:
             Principal:
               Service: ssm.amazonaws.com
             Action: sts:AssumeRole
-      # ManagedPolicyArns:
-      #   - arn:aws:iam::aws:policy/service-role/AmazonSSMAutomationRole
       Policies:
         - PolicyName: RemediationPermissions
           PolicyDocument:

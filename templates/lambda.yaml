@@ -1,11 +1,13 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Sets up Lambda functions for AWS Config rule and auto remediation"
+Description: "Sets up Lambda functions for AWS Config rule"
 
 Parameters:
   S3BucketName:
     Type: String
     Description: "Name of the S3 bucket containing Lambda function code"
-    Default: "wojciechowski.sh-lambda-registry"
+  SNSStackName:
+    Type: String
+    Description: "Name of the SNS stack that exports the topic ARN"
 
 Resources:
   ConfigRuleRole:
@@ -30,6 +32,11 @@ Resources:
                 Action:
                   - ec2:GetSerialConsoleAccessStatus
                 Resource: "*"
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: !ImportValue 
+                  Fn::Sub: "${SNSStackName}-ConfigNonComplianceTopicArn"
 
   ConfigRuleLambda:
     Type: AWS::Lambda::Function
@@ -37,6 +44,11 @@ Resources:
       Role: !GetAtt ConfigRuleRole.Arn
       Runtime: python3.13
       Handler: rule.lambda_handler
+      Timeout: 30
+      Environment:
+        Variables:
+          SNS_TOPIC_ARN: !ImportValue 
+            Fn::Sub: "${SNSStackName}-ConfigNonComplianceTopicArn"
       Code:
         S3Bucket: !Ref S3BucketName
         S3Key: rule.zip

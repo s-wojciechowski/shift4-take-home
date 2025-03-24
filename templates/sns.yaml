@@ -7,7 +7,6 @@ Parameters:
     Description: "Email address to receive non-compliance notifications"
     AllowedPattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
     ConstraintDescription: "Must be a valid email address"
-    Default: "dev@wojciechowski.sh"
 
 Resources:
   ConfigNonComplianceTopic:

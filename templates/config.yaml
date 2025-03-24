@@ -5,11 +5,9 @@ Parameters:
   LambdaStackName:
     Type: String
     Description: "Name of the lambda stack that contains the Lambda roles"
-    Default: "DisableSerialConsole-lambda"
   SSMStackName:
     Type: String
     Description: "Name of the SSM stack"
-    Default: "DisableSerialConsole-ssm"
 
 Resources:
   SerialConsoleRule:
