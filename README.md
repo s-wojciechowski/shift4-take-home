@@ -7,6 +7,18 @@ This repository contains CloudFormation templates that deploy an AWS Config rule
 * AWS CLI configured
 * `zip` for packaging the lambda function
 
+## Structure
+* `lambda/rule.py` - contains the lambda function for AWS Config rule, checks if the EC2 serial console setting is enabled. If it is enabled, the rule will be non-compliant and will send an email notification to specified email address.
+* `scripts/` - contains utility scripts
+    * `publish.sh` - script to publish the lambda function to an S3 bucket
+    * `deploy.sh` - script to deploy CloudFormation templates
+* `templates/` - contains the CloudFormation templates
+    * `config.yaml` - creates AWS Config rule and remediation action
+    * `lambda.yaml` - creates lambda function for AWS Config rule with necessary roles and permissions
+    * `sns.yaml` - creates SNS topic and subscription for notification when AWS Config rule is non-compliant
+    * `ssm.yaml` - creates SSM automation document for manual remediation of AWS config rule
+
+
 ## Steps
 1. Publish the lambda function to an S3 bucket
 ```
